@@ -1,0 +1,7 @@
+langchain
+langchain-experimental
+langchain-google-genai
+python-dotenv
+pyvis
+streamlit
+nest_asyncio
