@@ -32,24 +32,52 @@ In the middle part of his career, Einstein made important contributions to stati
 
 async def run_kg_gen_app():
     load_dotenv()
-    google_api_key = os.getenv("GOOGLE_API_KEY")
+    default_google_api_key = os.getenv("GOOGLE_API_KEY")
 
     st.set_page_config(layout="wide") # Use wide layout for better visualization
-    st.title("KG-Gen: Knowledge Graph Generator (Alpha)")
+    st.title("KG-Gen: Knowledge Graph Generator")
 
-    if not google_api_key:
-        st.warning("Please set your GOOGLE_API_KEY in the .env file.")
+    st.sidebar.header("LLM Configuration")
+    config_option = st.sidebar.radio(
+        "Choose LLM Configuration:",
+        ("Use Default Config", "Provide Custom Config")
+    )
+
+    current_model_name = GEMINI_MODEL_NAME
+    current_api_key = default_google_api_key
+    
+    if config_option == "Provide Custom Config":
+        st.sidebar.subheader("Custom LLM Details")
+        custom_model_name = st.sidebar.text_input(
+            "Gemini Model Name (e.g., gemini-pro, gemini-1.5-flash)",
+            value=GEMINI_MODEL_NAME
+        )
+        custom_api_key = st.sidebar.text_input(
+            "Personal Gemini API Key",
+            type="password" # Mask input for sensitive info
+        )
+
+        if custom_model_name:
+            current_model_name = custom_model_name
+        if custom_api_key:
+            current_api_key = custom_api_key
+        
+        # Give a warning if custom option is chosen but no key is provided
+        if not custom_api_key:
+            st.sidebar.warning("Please provide a custom API key for this option.")
+
+    if not current_api_key:
+        st.error("Google API key is missing. Please set GOOGLE_API_KEY in your .env file or provide a custom key.")
         st.markdown("[Get your Gemini API Key from Google AI Studio](https://makersuite.google.com/app/apikey)")
         return
 
-    # Initialize LLM and KG Processor once
     llm = get_gemini_llm(
-    api_key=google_api_key,
-    model_name=GEMINI_MODEL_NAME, # Use the constant defined in app.py
-    temperature=LLM_TEMPERATURE # Use the constant defined in app.py
+        api_key=current_api_key,
+        model_name=current_model_name,
+        temperature=LLM_TEMPERATURE
     )
-    kg_processor = KnowledgeGraphProcessor(llm)
 
+    kg_processor = KnowledgeGraphProcessor(llm)
     st.sidebar.header("Input Data")
     input_option = st.sidebar.radio(
         "Choose input method:",
